@@ -1,0 +1,37 @@
+{
+  "name": "angular-zoom",
+  "version": "0.0.0",
+  "description": "Zoom and pan images with AngularJS",
+  "main": "src/angular-zoom.js",
+  "scripts": {
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/steelsojka/angular-zoom.git"
+  },
+  "keywords": [
+    "angular",
+    "zoom",
+    "pan"
+  ],
+  "author": "Steven Sojka",
+  "license": "MIT",
+  "devDependencies": {
+    "coveralls": "~2.10.0",
+    "grunt": "~0.4.4",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-connect": "^0.7.1",
+    "grunt-contrib-jshint": "~0.10.0",
+    "grunt-contrib-uglify": "~0.4.0",
+    "grunt-karma": "~0.8.2",
+    "karma": "~0.12.9",
+    "karma-coverage": "^0.2.1",
+    "karma-jasmine": "~0.1.5",
+    "karma-phantomjs-launcher": "~0.1.4"
+  },
+  "bugs": {
+    "url": "https://github.com/steelsojka/angular-zoom/issues"
+  },
+  "homepage": "https://github.com/steelsojka/angular-zoom"
+}
