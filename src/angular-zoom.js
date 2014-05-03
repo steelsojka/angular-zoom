@@ -5,20 +5,15 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
   var vendors = ["-webkit-", "-moz-", "-ms-", "-o-", ""];
   
   var setStyles = function(element, prop, value, propPrefix) {
-    requestAnimationFrame(function() {
-      var styles = {};
+    var styles = {};
 
-      forEach(vendors, function(vendor) {
-        styles[vendor + prop] = propPrefix ? vendor + value : value;
-      });
-
-      element.css(styles);
+    forEach(vendors, function(vendor) {
+      styles[vendor + prop] = propPrefix ? vendor + value : value;
     });
+
+    element.css(styles);
   };
 
-  var setTransform = function(element, scale, transX, transY) {
-    setStyles(element, "transform", "scale(" + scale + ") translateY(" + -transY + "px) translateX(" + -transX + "px) translateZ(0)");
-  };
 
   var setTransition = function(element, fn) {
     setStyles(element, "transition", "transform 1s ease-in-out", true);
@@ -57,16 +52,31 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
       var startY = 0;
       var transX = 0;
       var transY = 0;
+      var posX = 0;
+      var posY = 0;
+
       var isDragging = false;
 
+      var setTransform = function() {
+        setStyles(ctrl.target, "transform", "scale(" + scope.zoomAmount + ") translate3d(" + posX + "px, " + posY +"px, 0)");
+      };
+
       scope.onMouseDown = function(e) {
-        startX = e.clientX + transX;
-        startY = e.clientY + transY;
+        startX = e.clientX;
+        startY = e.clientY;
+        startPosX = posX;
+        startPosY = posY;
         isDragging = true;
       };
 
       scope.onMouseUp = function(e) {
+        transX = 0;
+        transY = 0;
         isDragging = false;
+
+        if (scope.snapback) {
+          // TODO: add snapback effect
+        }
       };
 
       scope.onMouseMove = function(e) {
@@ -74,11 +84,12 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
           return;
         }
 
-        // TODO: divide by scope.zoomAmount to account for zoomed panning
-        transX = startX - e.clientX;
-        transY = startY - e.clientY;
+        transX = e.clientX - startX;
+        transY = e.clientY - startY;
+        posX = startPosX + transX / scope.zoomAmount;
+        posY = startPosY + transY / scope.zoomAmount;
 
-        setTransform(ctrl.target, scope.zoomAmount, transX, transY);
+        setTransform();
       };
 
       scope.onDoubleClick = apply(scope, function(e) {
@@ -91,16 +102,15 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
         });
       });
 
-      element.on("mousemove", scope.onMouseMove);
-      element.on("mousedown", scope.onMouseDown);
-      element.on("mouseup", scope.onMouseUp);
-      element.on("dblclick", scope.onDoubleClick);
+
+      element.on("mousemove", scope.onMouseMove)
+        .on("mousedown", scope.onMouseDown)
+        .on("mouseup", scope.onMouseUp)
+        .on("dblclick", scope.onDoubleClick);
 
       scope.$watch(function() {
         return scope.zoomAmount;
-      }, function(val) {
-        setTransform(ctrl.target, val, transX, transY);
-      });
+      }, setTransform);
     }
   };
 }])
