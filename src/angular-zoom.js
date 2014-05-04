@@ -1,7 +1,8 @@
-angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
+angular.module("angular-zoom", []).directive("ngZoomable" , ["$q", "$timeout", function($q, $timeout) {
 
   var forEach = angular.forEach;
   var isUndefined = angular.isUndefined;
+  var bind = angular.bind;
   var vendors = ["-webkit-", "-moz-", "-ms-", "-o-", ""];
   
   var setStyles = function(element, prop, value, propPrefix) {
@@ -16,12 +17,27 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
 
 
   var setTransition = function(element, fn) {
+    var deferred = $q.defer();
+    var done = false;
+
     setStyles(element, "transition", "transform 1s ease-in-out", true);
+
+    var onTransitionEnd = function() {
+      if (!done) {
+        setStyles(element, "transition", "");
+        prefixEventBind(element, "transitionend", onTransitionEnd, true);
+        done = true;
+        deferred.resolve();
+      }
+    };
+
+    prefixEventBind(element, "transitionend", onTransitionEnd);
+
     fn();
 
-    prefixEventBind(element, "transitionend", function() {
-      setStyles(element, "transition", "");
-    });
+    $timeout(onTransitionEnd, 1010, false);
+
+    return deferred.promise;
   };
 
   var prefixEventBind = function(element, type, callback, unbind) {
@@ -42,7 +58,10 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
     require: "ngZoomable",
     scope: {
       zoomAmount: "=",
-      maxZoom: "="
+      zoomMax: "=",
+      zoomIncrement: "=",
+      zoomTransition: "&",
+      snapback: "&"
     },
     controller: ["$scope", function($scope) {
       this.target = null;
@@ -61,6 +80,24 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
         setStyles(ctrl.target, "transform", "scale(" + scope.zoomAmount + ") translate3d(" + posX + "px, " + posY +"px, 0)");
       };
 
+      var setZoomAmount = function(amount) {
+        scope.zoomAmount = amount;
+      };
+
+      var zoom = function(amount) {
+        if (scope.zoomAmount >= scope.zoomMax) {
+          return;
+        }
+
+        if (scope.zoomTransition()) {
+          setTransition(ctrl.target, bind(this, setZoomAmount, amount));
+        } else {
+          setZoomAmount(amount)
+        }
+
+        setTransform();
+      };
+
       scope.onMouseDown = function(e) {
         startX = e.clientX;
         startY = e.clientY;
@@ -74,7 +111,7 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
         transY = 0;
         isDragging = false;
 
-        if (scope.snapback) {
+        if (scope.snapback()) {
           // TODO: add snapback effect
         }
       };
@@ -92,14 +129,9 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
         setTransform();
       };
 
-      scope.onDoubleClick = apply(scope, function(e) {
-        if (scope.zoomAmount >= scope.maxZoom) {
-          return;
-        }
-
-        setTransition(ctrl.target, function() {
-          scope.zoomAmount = 2;
-        });
+      scope.onDoubleClick = apply(scope, function() {
+        // TODO: make this zoom amount the increment
+        zoom(2);
       });
 
 
@@ -110,7 +142,7 @@ angular.module("angular-zoom", []).directive("ngZoomable" , [function() {
 
       scope.$watch(function() {
         return scope.zoomAmount;
-      }, setTransform);
+      }, zoom);
     }
   };
 }])

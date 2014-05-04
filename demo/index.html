@@ -6,9 +6,14 @@
     <script>
       angular.module("zoomDemo", ["angular-zoom"]);
     </script>
+    <style>
+      div {
+        overflow: hidden;
+      }
+    </style>
   </head>
   <body ng-app="zoomDemo" ng-init="zoom = 1">
-    <div ng-zoomable zoom-amount="zoom" max-zoom="2">
+    <div ng-zoomable zoom-amount="zoom" zoom-max="2" zoom-transition="true">
       <img ng-zoomable-target src="cat.jpg" draggable="false"/>
     </div>
 
